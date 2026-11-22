@@ -107,8 +107,10 @@
     <p class="sub">Kirish uchun Telegram botga <b>/panel</b> deb yozing. Bot bir martalik havola yoki kod yuboradi — u 10 daqiqa amal qiladi. Parol saqlanmaydi.</p>
     <label for="lapi">Server manzili</label>
     <input id="lapi" placeholder="https://xxxx.supabase.co/functions/v1/api" autocomplete="off">
-    <label for="ltoken">Bir martalik kod</label>
+    <label for="ltoken" id="ltokenl">Bir martalik kod</label>
     <input id="ltoken" class="mono" placeholder="botdan kelgan kod" autocomplete="off">
+    <label for="lpw" id="lpwl" class="hide">Parol</label>
+    <input id="lpw" type="password" class="hide" placeholder="admin paroli" autocomplete="current-password">
     <div class="row" style="margin-top:14px"><button class="b p" id="lbtn">Kirish</button><span class="sub" id="lmsg"></span></div>
   </div>
 
@@ -213,6 +215,8 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const store = { get: (k) => { try { return sessionStorage.getItem(k) || ""; } catch { return ""; } },
   set: (k, v) => { try { v ? sessionStorage.setItem(k, v) : sessionStorage.removeItem(k); } catch { /* yopiq rejim */ } } };
 let api = store.get("rolik.api"), session = store.get("rolik.session"), tab = "all", plan = "life", last = null, toastTimer = 0, pfilter = "", payCache = [];
+// Ko'chma admin dasturi (?app=1): kirish parol bilan (serverda faqat xeshi)
+const APP = new URLSearchParams(location.search).get("app") === "1";
 // Telegram Mini App (initData bo'lsa) — kirish kodsiz, tugmalar Telegram'niki
 const TG = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Telegram.WebApp : null;
 const haptic = (k = "light") => { try { TG && TG.HapticFeedback.impactOccurred(k); } catch { /* eski Telegram */ } };
@@ -266,7 +270,7 @@ async function call(action, body = {}) {
       body: JSON.stringify({ action, ...body }) });
   } catch { throw new Error("Serverga ulanib bo'lmadi. Internetni tekshirib, qayta urinib ko'ring."); }
   const data = await r.json().catch(() => ({}));
-  if (r.status === 401 && action !== "login") { if (TG) { session = ""; store.set("rolik.session", ""); location.reload(); } else signOut(data.message); throw new Error(data.message || "Sessiya tugagan."); }
+  if (r.status === 401 && action !== "login" && action !== "pw-login") { if (APP) data.message = "Sessiya tugadi. Parolni qayta kiriting."; if (TG) { session = ""; store.set("rolik.session", ""); location.reload(); } else signOut(data.message); throw new Error(data.message || "Sessiya tugagan."); }
   if (!r.ok) throw new Error(data.message || "Server xatosi — birozdan keyin urinib ko'ring.");
   return data;
 }
@@ -276,6 +280,20 @@ function signOut(msg) {
   session = ""; store.set("rolik.session", "");
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("lapi").value = api; $("lmsg").textContent = msg || "";
+}
+async function signInPw() {
+  if (!validApi(api)) { $("lmsg").textContent = "Server manzili noto'g'ri (https://… bo'lishi kerak)."; return; }
+  const pw = $("lpw").value;
+  if (!pw) { $("lmsg").textContent = "Parolni kiriting."; $("lpw").focus(); return; }
+  $("lbtn").disabled = true; $("lmsg").textContent = "Tekshirilmoqda…";
+  try {
+    const s = await call("pw-login", { password: pw });
+    session = s.session; store.set("rolik.session", session); store.set("rolik.api", api);
+    $("login").classList.add("hide"); $("app").classList.remove("hide");
+    await load();
+  } catch (e) { $("lmsg").textContent = e.message; $("lpw").select(); }
+  $("lpw").value = "";
+  $("lbtn").disabled = false;
 }
 async function signIn(token) {
   if (!validApi(api)) { $("lmsg").textContent = "Server manzili noto'g'ri (https://… bo'lishi kerak)."; return; }
@@ -410,7 +428,8 @@ $("kscan").onclick = () => TG.showScanQrPopup({ text: "Rolik AI → Obuna oynasi
 });
 $("refresh").onclick = () => run(load);
 $("logout").onclick = () => run(async () => { try { await call("logout"); } finally { signOut("Chiqdingiz."); } });
-$("lbtn").onclick = () => { api = $("lapi").value.trim(); signIn($("ltoken").value); };
+$("lbtn").onclick = () => { api = $("lapi").value.trim(); APP ? signInPw() : signIn($("ltoken").value); };
+$("lpw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("lbtn").click(); });
 $("ltoken").addEventListener("keydown", (e) => { if (e.key === "Enter") $("lbtn").click(); });
 $("kplans").addEventListener("click", (e) => { if (e.target.dataset.plan) { plan = e.target.dataset.plan; renderPlans(); } });
 $("kid").addEventListener("input", () => { $("kid").value = $("kid").value.toUpperCase(); });
@@ -500,6 +519,15 @@ renderPlans();
       $("login").classList.add("hide");
     }
     $("app").classList.remove("hide"); run(load); return;
+  }
+  if (APP) {                                                 // ko'chma dastur: kod o'rniga parol
+    document.title = "Rolik AI · Admin";
+    for (const id of ["ltokenl", "ltoken"]) $(id).classList.add("hide");
+    for (const id of ["lpwl", "lpw"]) $(id).classList.remove("hide");
+    if (validApi(api)) { $("lapi").classList.add("hide"); document.querySelector('label[for="lapi"]').classList.add("hide"); }
+    $("login").querySelector("p.sub").textContent = "Admin parolini kiriting. 5 marta noto'g'ri kiritilsa, kirish 15 daqiqaga yopiladi va Telegram'ga xabar keladi.";
+    if (session && api) { $("app").classList.remove("hide"); run(load); return; }
+    signOut(""); setTimeout(() => $("lpw").focus(), 50); return;
   }
   if (t) { $("login").classList.remove("hide"); $("lapi").value = api; signIn(t); return; }
   if (session && api) { $("app").classList.remove("hide"); run(load); return; }
