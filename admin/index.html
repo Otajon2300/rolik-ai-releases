@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Rolik AI — Admin panel</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #0B0D12; --card: rgba(255,255,255,.055); --ctl: rgba(255,255,255,.07); --line: rgba(255,255,255,.09); --line2: rgba(255,255,255,.16);
@@ -170,6 +171,11 @@
           <div id="months"></div>
           <div class="row sub" style="margin-top:8px"><span class="bar" style="width:14px;background:var(--acc)"></span>O'rnatildi <span class="bar" style="width:14px;background:var(--bad)"></span>O'chirildi</div>
         </div>
+      </div>
+      <div class="card" id="smsCard" style="margin-bottom:14px">
+        <div class="head"><h2>SMS telefonni ulash</h2><span class="sub">«Rolik SMS» ilovasi · QR 10 daqiqa amal qiladi</span></div>
+        <div class="row"><button class="b" id="smsPair">QR kod chiqarish</button><span class="sub" id="smsMsg"></span></div>
+        <div id="smsQr" style="margin-top:12px"></div>
       </div>
       <div class="card">
         <div class="head"><h2>Qo'lda berilgan kalitlar · <span id="issuedCount">0</span> ta</h2></div>
@@ -372,6 +378,22 @@ function setGift(on) {
   }
   if (on) { $("giftCard").scrollIntoView({ block: "start" }); $("kid").focus(); }
 }
+let smsTimer = 0;
+$("smsPair").onclick = () => run(async () => {
+  const r = await call("sms.pair");
+  const q = qrcode(0, "M");
+  q.addData(r.qr);
+  q.make();
+  $("smsQr").innerHTML = `<div style="background:#fff;display:inline-block;padding:10px;border-radius:10px">${q.createSvgTag({ cellSize: 5, margin: 0 })}</div>`;
+  let left = r.minutes * 60;
+  clearInterval(smsTimer);
+  const tickQr = () => {
+    $("smsMsg").textContent = left > 0 ? `Telefonda «Rolik SMS» → «QR kodni skanerlash». Qoldi ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}` : "QR eskirdi — yangisini chiqaring";
+    if (left-- <= 0) { clearInterval(smsTimer); $("smsQr").innerHTML = ""; }
+  };
+  tickQr();
+  smsTimer = setInterval(tickQr, 1000);
+});
 $("giftOpen").onclick = () => { haptic(); setGift(!giftMode); };
 $("pfilter").addEventListener("click", (e) => {
   const f = e.target.dataset.f;
