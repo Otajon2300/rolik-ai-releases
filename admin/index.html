@@ -72,7 +72,7 @@
   @media (max-width: 720px) {
     .wrap { padding: 14px 12px 90px; }
     .tabs-top { display: none; }
-    #btabs { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    #btabs { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
       background: var(--tg-sbg, #12151c); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
     #btabs button { background: transparent; border: 0; color: var(--tx3); font: inherit; font-size: 11.5px; padding: 6px 2px; border-radius: 8px; }
     #btabs button.on { color: var(--acct); background: var(--ctl); }
@@ -123,6 +123,7 @@
       <div class="tabs tabs-top" id="tabs">
         <button data-tab="all" class="on">Umumiy</button><button data-tab="lic">Litsenziyalar</button>
         <button data-tab="pay">To'lovlar</button><button data-tab="dev">Qurilmalar</button>
+        <button data-tab="err">Xatolar</button><button data-tab="ana">Tahlil</button>
       </div>
       <button class="b" id="refresh" title="Ma'lumotni yangilash">Yangilash</button>
       <button class="b" id="logout" title="Sessiyani tugatish">Chiqish</button>
@@ -174,6 +175,10 @@
           <div class="row sub" style="margin-top:8px"><span class="bar" style="width:14px;background:var(--acc)"></span>O'rnatildi <span class="bar" style="width:14px;background:var(--bad)"></span>O'chirildi</div>
         </div>
       </div>
+      <div class="card" id="bkpCard" style="margin-bottom:14px">
+        <div class="head"><h2>Zaxira</h2><span class="sub">har kuni 03:00 (Toshkent) · fayl Telegram'ingizga keladi</span></div>
+        <div class="row"><span id="bkpInfo" class="sub">—</span><div class="grow"></div><button class="b" data-act="backup-now">Hozir zaxira olish</button></div>
+      </div>
       <div class="card" id="smsCard" style="margin-bottom:14px">
         <div class="head"><h2>SMS telefonni ulash</h2><span class="sub">«Rolik SMS» ilovasi · QR 10 daqiqa amal qiladi</span></div>
         <div class="row"><button class="b" id="smsPair">QR kod chiqarish</button><span class="sub" id="smsMsg"></span></div>
@@ -190,7 +195,12 @@
       <div class="scroll"><table class="cards"><thead><tr><th>Kalit</th><th>Kompyuter ID</th><th>Tarif</th><th>Tugash sanasi</th><th>Oxirgi aloqa</th><th>Holat</th><th>Amallar</th></tr></thead><tbody id="lics"></tbody></table></div>
     </div></section>
 
-    <section id="t-pay" class="hide"><div class="card">
+    <section id="t-pay" class="hide"><div class="card" style="margin-bottom:14px">
+      <div class="head"><h2>Kutilayotgan to'lovlar</h2><span class="sub">48 soat · 🕓 SMS kech keldi · 🧾 chek bor · ⏱ vaqt tugagan</span></div>
+      <div class="sub" style="margin-bottom:8px">SMS telefoni jim bo'lsa yoki SMS kech kelsa — kartaga summa tushganini tekshirib, qo'lda tasdiqlang.</div>
+      <div class="scroll"><table class="cards"><thead><tr><th>Vaqt</th><th>Summa</th><th>Tarif</th><th>Kompyuter ID</th><th>Telegram</th><th></th></tr></thead><tbody id="pend"></tbody></table></div>
+      <div class="sub" id="unmatched" style="margin-top:8px"></div>
+    </div><div class="card">
       <div class="head"><h2>To'lovlar</h2><span class="sub">oxirgi 200 ta</span></div>
       <div class="chips filters" id="pfilter"><button data-f="" class="on">Hammasi</button><button data-f="pending_receipt">Kutilmoqda</button>
         <button data-f="auto">Avto</button><button data-f="manual">Qo'lda</button><button data-f="rejected">Rad etilgan</button></div>
@@ -200,11 +210,27 @@
     <section id="t-dev" class="hide"><div class="card">
       <div class="head"><h2>Qurilmalar</h2><div class="grow"></div><input id="devq" placeholder="Kompyuter ID bo'yicha qidirish" style="max-width:320px"></div>
       <div class="scroll"><table class="cards"><thead><tr><th>Kompyuter ID</th><th>Birinchi marta</th><th>Oxirgi aloqa</th><th>Windows</th><th>Grafika</th><th>Versiya</th><th>Sinov</th><th>Holat</th><th>Amallar</th></tr></thead><tbody id="devs"></tbody></table></div>
+    </div><div class="card" style="margin-top:14px">
+      <div class="head"><h2>Kompyuter almashtirishlar</h2><span class="sub">30 kunda 2 marta · ortig'i faqat admin orqali</span></div>
+      <div class="scroll"><table class="cards"><thead><tr><th>Vaqt</th><th>Turi</th><th>Kalit</th><th>Qayerdan</th><th>Qayerga</th></tr></thead><tbody id="moves"></tbody></table></div>
     </div></section>
+
+    <section id="t-err" class="hide"><div class="card">
+      <div class="head"><h2>Xatolar</h2><span class="sub">foydalanuvchi ruxsat bergan kompyuterlardan · bir xil xato bitta qatorda</span></div>
+      <div class="scroll"><table class="cards"><thead><tr><th>Xato</th><th>Necha marta</th><th>Qurilma</th><th>Versiyalar</th><th>Birinchi / oxirgi</th><th>Holat</th><th></th></tr></thead><tbody id="errs"></tbody></table></div>
+      <div id="errDetail" class="hide" style="margin-top:12px"></div>
+    </div></section>
+
+    <section id="t-ana" class="hide">
+      <div class="chips filters" id="adays" style="margin-bottom:12px"><button data-d="7">7 kun</button><button data-d="30" class="on">30 kun</button><button data-d="90">90 kun</button></div>
+      <div class="grid kpis" id="akpis"></div>
+      <div class="grid two" id="alists"></div>
+    </section>
   </div>
 </div>
-<nav id="btabs"><button data-tab="all" class="on"><b>◫</b>Umumiy</button><button data-tab="lic"><b>🔑</b>Litsenziyalar</button>
-  <button data-tab="pay"><b>💰</b>To'lovlar</button><button data-tab="dev"><b>💻</b>Qurilmalar</button></nav>
+<nav id="btabs"><button data-tab="all" class="on"><b>◫</b>Umumiy</button><button data-tab="lic"><b>🔑</b>Kalitlar</button>
+  <button data-tab="pay"><b>💰</b>To'lovlar</button><button data-tab="dev"><b>💻</b>Qurilmalar</button>
+  <button data-tab="err"><b>🐞</b>Xatolar</button><button data-tab="ana"><b>📈</b>Tahlil</button></nav>
 <div id="toast" class="hide"></div>
 
 <script>
@@ -307,7 +333,7 @@ async function signIn(token) {
   $("lbtn").disabled = false;
 }
 
-const statusColor = { auto: "var(--ok)", manual: "var(--ok)", rejected: "var(--bad)", expired: "var(--tx2)", pending_receipt: "var(--warn)" };
+const statusColor = { auto: "var(--ok)", notified: "var(--ok)", issued: "var(--warn)", processing: "var(--warn)", error: "var(--bad)", manual: "var(--ok)", rejected: "var(--bad)", expired: "var(--tx2)", pending_receipt: "var(--warn)" };
 function payRows(rows) {
   if (!rows.length) return '<tr><td colspan="6" class="sub">Hali to\'lov yo\'q.</td></tr>';
   return rows.map((p) => `<tr><td data-l="Vaqt">${esc(time(p.at))}</td><td data-l="Summa"><b>${esc(money(p.amount))}</b></td><td data-l="Tarif">${esc(p.plan)}</td><td data-l="Kompyuter" class="mono">${esc(p.deviceId || "—")}</td><td data-l="Telegram">${esc(p.tg || "—")}</td>` +
@@ -315,7 +341,8 @@ function payRows(rows) {
       ? `<td class="acts"><span style="color:var(--warn)">Chek tekshiruvda</span> ${p.receipt ? `<button class="b" data-act="pay-img" data-id="${esc(p.id)}">Chek</button>` : ""} <button class="b p" data-act="pay-ok" data-id="${esc(p.id)}">Tasdiqlash</button> <button class="b d" data-act="pay-no" data-id="${esc(p.id)}">Rad etish</button><div class="pimg" id="pimg${esc(p.id)}" style="flex-basis:100%"></div></td>`
       : `<td data-l="Holat"><span style="color:${statusColor[p.status] || "var(--tx2)"}">${esc(p.statusText)}</span></td>`) + "</tr>").join("");
 }
-function renderPays() { $("payall").innerHTML = payRows(pfilter ? payCache.filter((p) => p.status === pfilter) : payCache); }
+const PGROUP = { auto: ["auto", "notified", "issued", "processing", "error"] };
+function renderPays() { $("payall").innerHTML = payRows(pfilter ? payCache.filter((p) => (PGROUP[pfilter] || [pfilter]).includes(p.status)) : payCache); }
 const stateColor = { active: "var(--ok)", ending: "var(--warn)", expired: "var(--bad)", revoked: "var(--bad)", blocked: "var(--bad)", unbound: "var(--tx2)" };
 
 function renderOverview(d) {
@@ -358,11 +385,68 @@ function renderDevs(rows) {
     : '<tr><td colspan="9" class="sub">Topilmadi.</td></tr>';
 }
 
+const MOVE_TYPE = { transfer: "O'tkazildi", device_rematch: "Avtomatik (disk/Windows)", transfer_denied: "Rad etildi" };
+let adays = 30, pendArm = 0;
+function renderPending(d) {
+  $("pend").innerHTML = d.slots.length ? d.slots.map((x) => `<tr><td data-l="Vaqt">${x.late ? "🕓" : x.receipt ? "🧾" : "⏱"} ${esc(time(x.at))}</td><td data-l="Summa"><b>${esc(money(x.amount))}</b></td><td data-l="Tarif">${esc(x.plan)}</td>
+    <td data-l="Kompyuter" class="mono">${esc(x.deviceId || "—")}</td><td data-l="Telegram">${esc(x.tg || "—")}</td>
+    <td class="acts"><button class="b p" data-act="slot-ok" data-id="${esc(x.id)}" data-sum="${esc(money(x.amount))}">Tasdiqlash</button></td></tr>`).join("")
+    : '<tr><td colspan="6" class="sub">Kutilayotgan to\'lov yo\'q.</td></tr>';
+  const st = d.stuck || [];                         // T1: to'lov qabul qilingan, kalit yoki xabar hali yetmagan
+  if (st.length) $("pend").innerHTML = st.map((x) => `<tr><td data-l="Vaqt">❗ ${esc(time(x.at))}</td><td data-l="Summa"><b>${esc(money(x.amount))}</b></td><td data-l="Tarif">${esc(x.plan)}</td>
+    <td data-l="Kompyuter" class="mono">${esc(x.deviceId || "—")}</td><td data-l="Telegram">${esc(x.tg || "—")}</td>
+    <td class="acts"><span style="color:var(--bad)">${esc(x.statusText)}${x.attempts ? ` · ${esc(x.attempts)} urinish` : ""}</span> <button class="b p" data-act="pay-retry" data-id="${esc(x.id)}">Qayta urinish</button></td></tr>`).join("")
+    + (d.slots.length ? $("pend").innerHTML : "");
+  $("unmatched").textContent = d.unmatched.length ? "Mos kelmagan kirimlar: " + d.unmatched.map((u) => `${money(u.amount)} so'm (${time(u.at)})`).join(" · ") : "";
+}
+function renderBackup(b) {
+  $("bkpInfo").innerHTML = b && b.at ? `Oxirgi: <b>${esc(ago(b.at))}</b> · ${esc(Math.round((b.size || 0) / 1024))} KB · ${esc(Object.values(b.counts || {}).reduce((a, n) => a + n, 0))} qator`
+    + (Date.now() - Date.parse(b.at) > 26 * 3600e3 ? ' · <span style="color:var(--bad)">26 soatdan eski!</span>' : "")
+    : '<span style="color:var(--warn)">Hali zaxira olinmagan</span>';
+}
+function renderMoves(rows) {
+  $("moves").innerHTML = rows.length ? rows.map((e) => `<tr><td data-l="Vaqt">${esc(time(e.at))}</td><td data-l="Turi">${esc(MOVE_TYPE[e.type] || e.type)}${e.payload && e.payload.via ? " · " + esc(e.payload.via) : ""}</td>
+    <td data-l="Kalit" class="mono">${esc((e.payload && e.payload.key) || "—")}</td><td data-l="Qayerdan" class="mono">${esc((e.payload && e.payload.from) || "—")}</td><td data-l="Qayerga" class="mono">${esc((e.payload && e.payload.to) || e.device_id || "—")}</td></tr>`).join("")
+    : '<tr><td colspan="5" class="sub">Hali o\'tkazish bo\'lmagan.</td></tr>';
+}
+function verKey(v) {
+  const m = /^v?(\d+)\.(\d+)(?:\.(\d+))?(?:-?(alpha|beta|rc)\.?(\d*))?/i.exec(String(v || ""));
+  return m ? [+m[1], +m[2], +(m[3] || 0), ({ alpha: -3, beta: -2, rc: -1 })[(m[4] || "").toLowerCase()] || 0, +(m[5] || 0)] : [0, 0, 0, 0, 0];
+}
+function latestVer(vs) {
+  return (vs || []).slice().sort((a, b) => { const x = verKey(a), y = verKey(b); for (let i = 0; i < 5; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; }).pop() || "";
+}
+function renderErrors(rows) {
+  $("errs").innerHTML = rows.length ? rows.map((g) => {
+    const st = g.fixed_in ? (g.reopened ? `<span style="color:var(--bad)">Qayta paydo bo'ldi (${esc(g.fixed_in)})</span>` : `<span style="color:var(--ok)">Tuzatildi · ${esc(g.fixed_in)}</span>`) : '<span style="color:var(--warn)">Ochiq</span>';
+    return `<tr><td data-l="Xato"><b>${esc(String(g.title).slice(0, 120))}</b><div class="sub">${g.kind === "crash" ? "qulash" : "xato"} · <span class="mono">${esc(g.fingerprint.slice(0, 10))}</span></div></td>
+      <td data-l="Necha marta">${esc(g.count)}</td><td data-l="Qurilma">${esc(g.devices)}</td><td data-l="Versiyalar">${esc((g.versions || []).slice(-3).join(", "))}</td>
+      <td data-l="Vaqt">${esc(date(g.first_seen))} / ${esc(ago(g.last_seen))}</td><td data-l="Holat">${st}</td>
+      <td class="acts"><button class="b" data-act="err-open" data-id="${esc(g.fingerprint)}">Ochish</button>${g.fixed_in && !g.reopened ? "" : ` <button class="b p" data-act="err-fixed" data-id="${esc(g.fingerprint)}" data-ver="${esc(latestVer(g.versions))}">Tuzatildi</button>`}</td></tr>`;
+  }).join("") : '<tr><td colspan="7" class="sub">Xato hisobotlari yo\'q.</td></tr>';
+}
+function renderAnalytics(a) {
+  const k = [["Montajlar", a.montages, `${a.days} kunda`], ["O'rtacha yig'ish", a.avgBuildSec ? a.avgBuildSec + " s" : "—", `tahlil ${a.avgAnalyzeSec || "—"} s`],
+    ["O'rtacha eksport", a.avgExportSec ? Math.round(a.avgExportSec / 60) + " daq" : "—", "MP4"], ["Eksport xatolari", a.exportFailPct + "%", "muvaffaqiyatsiz"],
+    ["Tashlab ketilgan", a.abandoned, "eksportsiz montajlar"], ["Hodisalar", a.events, "statistika"],
+    ["Bir vaqtdagi to'lovlar", a.slotsMax ?? "—", `eng ko'p ochiq slot (${a.slotsMaxDay || "—"}) · chegara 100`]];
+  $("akpis").innerHTML = k.map(([l, v, n]) => `<div class="card kpi"><div class="sub">${esc(l)}</div><div class="v">${esc(v)}</div><div class="sub">${esc(n)}</div></div>`).join("");
+  const list = (title, rows, unit = "") => `<div class="card"><div class="head"><h2>${esc(title)}</h2></div>` + (rows && rows.length ? rows.map((r) => {
+    const max = Math.max(...rows.map((x) => x.n), 1);
+    return `<div class="month"><span class="mono" style="min-width:120px">${esc(r.k || "—")}</span><div><div class="bar" style="background:var(--acc);width:${Math.round(r.n / max * 100)}%"></div></div><span class="sub">${esc(r.n)}${unit}</span></div>`;
+  }).join("") : '<div class="sub">Ma\'lumot yo\'q</div>') + "</div>";
+  $("alists").innerHTML = list("Eng ko'p tanlangan shablonlar", a.templates) + list("Eng ko'p almashtirilgan shablonlar", a.templatesSwitched)
+    + list("Formatlar", a.formats) + list("Montaj uslubi", a.styles) + list("Kodlovchi", a.encoders) + list("Videokarta", a.gpus)
+    + list("Funksiyalar", a.features) + list("Versiyalar (faol qurilma)", a.versions);
+}
+
 async function load() {
-  if (tab === "all") renderOverview(await call("overview"));
+  if (tab === "all") { renderOverview(await call("overview")); renderBackup((await call("backup.info")).last); }
+  if (tab === "err") renderErrors((await call("errors")).rows);
+  if (tab === "ana") renderAnalytics(await call("analytics", { days: adays }));
   if (tab === "lic") renderLics((await call("licenses", { q: $("licq").value })).rows);
-  if (tab === "pay") { payCache = (await call("payments")).rows; renderPays(); }
-  if (tab === "dev") renderDevs((await call("devices", { q: $("devq").value })).rows);
+  if (tab === "pay") { renderPending(await call("pending")); payCache = (await call("payments")).rows; renderPays(); }
+  if (tab === "dev") { renderDevs((await call("devices", { q: $("devq").value })).rows); renderMoves((await call("transfers")).rows); }
 }
 function renderPlans() {
   $("kplans").innerHTML = PLANS.map(([id, label]) => `<button data-plan="${id}" class="${id === plan ? "on" : ""}">${label}</button>`).join("");
@@ -373,7 +457,7 @@ let giftMode = false;
 function showTab(t) {
   tab = t;
   for (const b of [...$("tabs").children, ...$("btabs").children]) b.classList.toggle("on", b.dataset.tab === t);
-  for (const id of ["all", "lic", "pay", "dev"]) $("t-" + id).classList.toggle("hide", id !== t);
+  for (const id of ["all", "lic", "pay", "dev", "err", "ana"]) $("t-" + id).classList.toggle("hide", id !== t);
   run(load);
 }
 for (const bar of ["tabs", "btabs"]) $(bar).addEventListener("click", (e) => {
@@ -413,6 +497,13 @@ $("smsPair").onclick = () => run(async () => {
   smsTimer = setInterval(tickQr, 1000);
 });
 $("giftOpen").onclick = () => { haptic(); setGift(!giftMode); };
+$("adays").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-d]");
+  if (!b) return;
+  adays = Number(b.dataset.d);
+  for (const x of $("adays").children) x.classList.toggle("on", x === b);
+  run(load);
+});
 $("pfilter").addEventListener("click", (e) => {
   const f = e.target.dataset.f;
   if (f === undefined) return;
@@ -488,6 +579,26 @@ document.addEventListener("click", (e) => {
     }
     else if (act === "block") { if (!(await ask(`${id} kompyuteri bloklansinmi? Unda dastur ishlamaydi.`))) return; r = await call("device.block", { id }); }
     else if (act === "unblock") r = await call("device.unblock", { id });
+    else if (act === "slot-ok") {                      // ikki bosish: birinchisi tugmani «Ha, tasdiqlayman» ga aylantiradi
+      if (pendArm !== Number(id)) { pendArm = Number(id); b.textContent = `Ha, ${b.dataset.sum} so'm tushdi`; b.classList.add("d"); return; }
+      pendArm = 0;
+      r = await call("slot.confirm", { id: Number(id) });
+    }
+    else if (act === "pay-retry") r = await call("pay.retry", { id: Number(id) });
+    else if (act === "backup-now") { b.disabled = true; try { r = await call("backup.now"); } finally { b.disabled = false; } }
+    else if (act === "err-fixed") {                    // shu xato ko'ringan eng yangi versiyadan KEYINGI versiyalarda chiqsa — «qayta paydo bo'ldi»
+      if (!(await ask("Xato tuzatildi deb belgilansinmi? Yangi versiyada yana chiqsa, sizga xabar keladi."))) return;
+      r = await call("error.fixed", { fp: id, version: b.dataset.ver || "" });
+    }
+    else if (act === "err-open") {
+      const d = await call("error.detail", { fp: id });
+      const box = $("errDetail");
+      box.classList.remove("hide");
+      box.innerHTML = `<div class="head"><h2>${esc(d.group && d.group.title)}</h2></div>` + (d.samples || []).map((x) =>
+        `<div class="card" style="margin-top:8px"><div class="sub">${esc(time(x.at))} · ${esc(x.payload && x.payload.app && x.payload.app.version)} · ${esc(JSON.stringify((x.payload && x.payload.sys) || {}))}</div>
+        <pre class="mono" style="white-space:pre-wrap;font-size:12px;margin:6px 0 0">${esc(JSON.stringify((x.payload && x.payload.data) || {}, null, 1))}</pre></div>`).join("");
+      return;
+    }
     else return;
     toast(r.message || "Bajarildi.");
     await load();
